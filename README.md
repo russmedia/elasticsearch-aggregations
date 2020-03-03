@@ -5,22 +5,22 @@ Table of contents
 =================
 
    * [Table of contents](#table-of-contents)
-      * [Deploy with docker-compose](#deploy)
+      * [Deploy](#deploy)
       * [1. Static schema](#1-static-schema)
       * [2. Load data](#2-load-data)
       * [3. Query context](#3-query-context)
       * [4. Filter context](#4-filter-context)
       * [5. Aggregations](#5-aggregations)
-        * [5.1. Stats](#5.1-stats)
-        * [5.2. Percentiles](#5.2-percentiles)
-        * [5.3. Buckets](#5.3-buckets)
-        * [5.4. Nested](#5.4-nested)
-      * [6. Advanced full-text search](#6-advanced)
-        * [6.1. Proximity search](#6.1-proximity-search)
-        * [6.2. Fuzzyness](#6.2-fuzzyness)
+        * [Stats](#stats)
+        * [Percentiles](#percentiles)
+        * [Buckets](#buckets)
+        * [Nested](#nested)
+      * [6. Advanced fulltext search](#6-advanced-fulltext-search)
+        * [Proximity search](#proximity-search)
+        * [Fuzzyness](#fuzzyness)
       * [7. Useful commands](#7-useful-commands)
 
-## Deploy with docker-compose
+## Deploy
 ```
 cd deploy
 docker-compose up -d
@@ -68,7 +68,8 @@ python load_beers.py
 cd -
 ```
 
-## 3. Query context (relevance score)
+## 3. Query context
+(relevance score)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -80,7 +81,8 @@ POST http://localhost:9200/beers/_search
 }
 ```
 
-## 4. Filter context (yes or no)
+## 4. Filter context
+(yes or no)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -99,7 +101,7 @@ POST http://localhost:9200/beers/_search
 
 ## 5. Aggregations
 
-### 5.1. Stats
+### Stats
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-stats-aggregation.html)
 ```json
 POST /INDEX_NAME/_search?size=0
@@ -115,7 +117,7 @@ POST /INDEX_NAME/_search?size=0
 }
 ```
 
-### 5.2. Percentiles
+### Percentiles
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
 ```json
 POST /INDEX_NAME/_search
@@ -133,7 +135,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-### 5.3. Buckets
+### Buckets
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html)
 
 - terms (create buckets for all unique values of field)
@@ -172,7 +174,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-### 5.4. Nested
+### Nested
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html)
 
 ```json
@@ -200,10 +202,10 @@ POST /INDEX_NAME/_search
 }
 ```
 
-## 6. Advanced full-text search
+## 6. Advanced fulltext search
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/full-text-queries.html)
 
-### 6.1. Proximity search
+### Proximity search
 
 - look for phrase with specific words and order
 ```json
@@ -220,7 +222,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-### 6.2. Fuzzyness
+### Fuzzyness
 - fix misspelling 
 - fuzziness describe how many character chnages per word can be made
 - degrades performance
