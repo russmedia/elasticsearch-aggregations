@@ -1,11 +1,24 @@
 # elasticsearch-aggregations
 Elasticsearch aggregations.
 
-## Documentation
+Table of contents
+=================
 
-* [Deploy with docker-compose](#deploy)
-* [Static schema](#Static-schema)
-
+   * [Deploy with docker-compose](#deploy)
+   * [Table of contents](#table-of-contents)
+      * [1. Static schema](#1-static-schema)
+      * [2. Load data](#2-load-data)
+      * [3. Query context (relevance score)](#3-query-context)
+      * [4. Filter context (yes or no)](#4-filter-context)
+      * [5. Aggregations](#5-aggregations)
+        * [5.1. Stats](#5.1.-stats)
+        * [5.2. Percentiles](#5.2.-percentiles)
+        * [5.3. Buckets](#5.3.-buckets)
+        * [5.4. Nested](#5.4.-nested)
+      * [6. Advanced full-text search](#6.-advanced-full-text-search)
+        * [6.1. Proximity search](#6.1.-proximity-search)
+        * [6.2. Fuzzyness](#6.2.-fuzzyness)
+      * [7. Useful commands](#7.-useful-commands)
 
 ## Deploy with docker-compose
 ```
@@ -225,7 +238,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-# Useful commands
+## 7. Useful commands
 
 - get indices
 ```
@@ -235,4 +248,3 @@ GET http://localhost:9200/_cat/indices?v
 ```
 GET http://localhost:9200/beers
 ```
-
