@@ -1,7 +1,13 @@
 # elasticsearch-aggregations
 Elasticsearch aggregations.
 
-# Deploy with docker-compose
+## Documentation
+
+* [Deploy with docker-compose](#deploy)
+* [Static schema](#Static-schema)
+
+
+## Deploy with docker-compose
 ```
 cd deploy
 docker-compose up -d
@@ -10,7 +16,7 @@ cd -
 
 Note: please go to `Useful commands` if needed.
 
-# Static schema
+## 1. Static schema
 
 Elasticsearch is able of indexing documents event without knowing the schema (dynamic mappins).
 For better optimization and index speed static schema with proper field types is recommended.
@@ -41,7 +47,7 @@ PUT /beers
 }
 ```
 
-# Load data
+## 2. Load data
 Requirements: python.
 ```
 cd dataset
@@ -49,7 +55,7 @@ python load_beers.py
 cd -
 ```
 
-# Query context (relevance score)
+## 3. Query context (relevance score)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -61,7 +67,7 @@ POST http://localhost:9200/beers/_search
 }
 ```
 
-# Filter context (yes or no)
+## 4. Filter context (yes or no)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -78,7 +84,9 @@ POST http://localhost:9200/beers/_search
 }
 ```
 
-# Stats
+## 5. Aggregations
+
+### 5.1. Stats
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-stats-aggregation.html)
 ```json
 POST /INDEX_NAME/_search?size=0
@@ -94,7 +102,7 @@ POST /INDEX_NAME/_search?size=0
 }
 ```
 
-# Percentiles
+### 5.2. Percentiles
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
 ```json
 POST /INDEX_NAME/_search
@@ -112,7 +120,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-# Buckets
+### 5.3. Buckets
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html)
 
 - terms (create buckets for all unique values of field)
@@ -151,7 +159,7 @@ POST /INDEX_NAME/_search
 }
 ```
 
-# Nested
+### 5.4. Nested
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html)
 
 ```json
@@ -176,6 +184,44 @@ POST /INDEX_NAME/_search
         	}
         }
     }
+}
+```
+
+## 6. Advanced full-text search
+[docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/full-text-queries.html)
+
+### 6.1. Proximity search
+
+- look for phrase with specific words and order
+```json
+POST /INDEX_NAME/_search
+{
+  "query": {
+    "match_phrase": {
+      "name_breweries":{
+      	"query": "Zywiec Browar",
+    	"slop": 2
+      }
+    }
+  }
+}
+```
+
+### 6.2. Fuzzyness
+- fix misspelling 
+- fuzziness describe how many character chnages per word can be made
+- degrades performance
+```json
+POST /INDEX_NAME/_search
+{
+  "query": {
+    "match": {
+      "name_breweries":{
+      	"query": "ZywiecX",
+    	"fuzziness": 1
+      }
+    }
+  }
 }
 ```
 
