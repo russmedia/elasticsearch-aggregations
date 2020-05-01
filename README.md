@@ -18,6 +18,8 @@ Table of contents
       * [6. Advanced fulltext search](#6-advanced-fulltext-search)
         * [Proximity search](#proximity-search)
         * [Fuzzyness](#fuzzyness)
+        * [Query boost](#query-boost)
+        * [Geo search](#geo-search)
       * [7. Useful commands](#7-useful-commands)
 
 ## Deploy
@@ -54,7 +56,10 @@ PUT /beers
 	    },
 	    "name_breweries": {
 	      "type": "text"
-	    }
+      },
+      "coordinates": {
+        "type": "geo_point"
+      }
 	  }
 	}
 }
@@ -69,7 +74,7 @@ cd -
 ```
 
 ## 3. Query context
-(relevance score)
+(relevance score explanation)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -80,6 +85,8 @@ POST http://localhost:9200/beers/_search
   }
 }
 ```
+ and now expaine the query chnaging URL:
+ `http://localhost:9200/beers/_explain/244c6b68f6c6768c721296c8bc023615ab6587af` (needs ID of first document from previous example)
 
 ## 4. Filter context
 (yes or no)
@@ -88,9 +95,6 @@ POST http://localhost:9200/beers/_search
 {
   "query": {
     "bool": {
-        "must": [
-          { "match_all": {} }
-        ],
       "filter": [
         {"term": {"country":"Poland"}}
       ]
@@ -104,7 +108,7 @@ POST http://localhost:9200/beers/_search
 ### Stats
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-stats-aggregation.html)
 ```json
-POST /INDEX_NAME/_search?size=0
+POST http://localhost:9200/beers/_search
 {
     "size": 0,
     "aggs" : {
@@ -116,11 +120,12 @@ POST /INDEX_NAME/_search?size=0
     }
 }
 ```
+Note: `stats` -> `extended_stats` == more statistical data
 
 ### Percentiles
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-percentile-aggregation.html)
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
     "size": 0,
     "aggs" : {
@@ -134,19 +139,50 @@ POST /INDEX_NAME/_search
     }
 }
 ```
+Note: they are approximate - to be able to scale this solution.
 
-### Buckets
+### Buckets (aka faceting in Solr)
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html)
 
 - terms (create buckets for all unique values of field)
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
     "size": 0,
     "aggs" : {
-        "country_beers" : { 
+        "country_beers_bucket" : { 
           "terms" : { 
-            "field" : "country" 
+            "field" : "country",
+            "size": 10
+          } 
+        },
+        "city_beers_bucket" : {
+          "terms" : { 
+            "field" : "city",
+            "size": 10
+          } 
+        }
+    }
+}
+```
+
+- buckets with narrow search (going into facet-like aggregation)
+```
+POST http://localhost:9200/beers/_search
+{
+    "size": 0,
+    "query": {
+	    "bool": {
+	      "filter": [
+	        {"term": {"country":"Germany"}}
+	      ]
+    }
+	  },
+    "aggs" : {
+        "city_beers_bucket" : {
+          "terms" : { 
+            "field" : "city",
+            "size": 10
           } 
         }
     }
@@ -155,7 +191,7 @@ POST /INDEX_NAME/_search
 
 - filters (create bucket for each defined filter)
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
     "size": 0,
     "aggs" : {
@@ -178,7 +214,7 @@ POST /INDEX_NAME/_search
 [docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html)
 
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
     "size": 0,
     "aggs" : {
@@ -207,16 +243,46 @@ POST /INDEX_NAME/_search
 
 ### Proximity search
 
+- normal query (with AND) - finding too many results
+```json
+POST http://localhost:9200/beers/_search
+{
+  "query": {
+    "match": {
+      "name_breweries":{
+      	"query": "Zywiec Browar",
+      	"operator": "AND"
+    	
+      }
+    }
+  }
+}
+```
+
 - look for phrase with specific words and order
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
   "query": {
     "match_phrase": {
       "name_breweries":{
       	"query": "Zywiec Browar",
-    	"slop": 2
+    	  "slop": 2
       }
+    }
+  }
+}
+```
+
+- search across multiple fields
+```json
+POST http://localhost:9200/beers/_search
+{
+  "query": {
+    "multi_match" : {
+      "query":    "Zywiec Browar", 
+      "fields": [ "name_breweries", "name" ],
+      "operator": "AND"
     }
   }
 }
@@ -227,16 +293,130 @@ POST /INDEX_NAME/_search
 - fuzziness describe how many character chnages per word can be made
 - degrades performance
 ```json
-POST /INDEX_NAME/_search
+POST http://localhost:9200/beers/_search
 {
   "query": {
     "match": {
       "name_breweries":{
-      	"query": "ZywiecX",
+      	"query": "ZywieX",
     	"fuzziness": 1
       }
     }
   }
+}
+```
+
+### Query boost
+```json
+POST http://localhost:9200/beers/_search
+{
+  "query": {
+    "bool" : {
+      "must" : [
+      		{
+      			"match" : { 
+      				"name" : 
+	      			{
+	      				"query": "Porter",
+	      				"boost": 5    				
+	      			}
+      			}
+      		},
+      		{
+      			"match": { "name_breweries": "Browar Zywiec"}
+      		}
+      ],
+      "must_not": {
+      	"term": { "country": "United States"}
+      }
+    }
+  }
+}
+```
+and go to explain (same body, just use below HTTP endpoint and method)
+`GET http://localhost:9200/beers/_explain/244c6b68f6c6768c721296c8bc023615ab6587af`
+
+
+### Geo-search
+
+Note: loading geo-point from affay is in different order!
+
+- [geo-point](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-point.html)
+- [ge-search](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html)
+
+- by rectangle (Berlin coordinates)
+```json
+POST http://localhost:9200/beers/_search
+{
+    "query": {
+        "bool" : {
+            "must" : {
+                "match_all" : {}
+            },
+            "filter" : {
+                "geo_bounding_box" : {
+                    "coordinates" : {
+                        "top_left" : {
+                            "lat" : 52.644465,
+                            "lon" : 13.090329
+                        },
+                        "bottom_right" : {
+                            "lat" : 52.304024,
+                            "lon" : 13.732684
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+- by distance from point
+```json
+POST http://localhost:9200/beers/_search
+{
+    "query": {
+        "bool" : {
+            "must" : {
+                "match_all" : {}
+            },
+            "filter" : {
+                "geo_distance" : {
+                    "distance" : "10km",
+                    "coordinates" : {
+                        "lat" : 47.407339,
+                        "lon" : 9.744426
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+- by drawing a polygon
+```json
+POST http://localhost:9200/beers/_search
+{
+    "query": {
+        "bool" : {
+            "must" : {
+                "match_all" : {}
+            },
+            "filter" : {
+                "geo_polygon" : {
+                    "coordinates" : {
+                        "points" : [
+                            {"lat" : 47.406177, "lon" : 9.745112},
+                            {"lat" : 47.446801, "lon" : 9.762261},
+                            {"lat" : 47.501465, "lon" : 9.731163}
+                        ]
+                    }
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -249,4 +429,9 @@ GET http://localhost:9200/_cat/indices?v
 - index description
 ```
 GET http://localhost:9200/beers
+```
+
+- get mapping
+```
+http://localhost:9200/beers/_mapping
 ```

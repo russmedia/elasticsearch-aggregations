@@ -15,6 +15,7 @@ with open('open-beer-database.json') as json_file:
                 'price': (random.random() * 10),
                 'city': fields['city'],
                 'name_breweries': fields['name_breweries'],
+                'coordinates': "{},{}".format(fields['coordinates'][0],fields['coordinates'][1])
             }
             es.index(index="beers", id=p['recordid'], body=doc)
         except:
