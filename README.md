@@ -385,8 +385,8 @@ POST http://localhost:9200/beers/_search
                 "geo_distance" : {
                     "distance" : "10km",
                     "coordinates" : {
-                        "lat" : 47.407339,
-                        "lon" : 9.744426
+                        "lat" : 48.135125,
+                        "lon" : 11.569979
                     }
                 }
             }
