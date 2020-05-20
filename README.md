@@ -20,7 +20,8 @@ Table of contents
         * [Fuzzyness](#fuzzyness)
         * [Query boost](#query-boost)
         * [Geo search](#geo-search)
-      * [7. Useful commands](#7-useful-commands)
+      * [7. Synonyms](#7-synonyms)
+      * [8. Useful commands](#8-useful-commands)
 
 ## Deploy
 ```
@@ -339,10 +340,10 @@ and go to explain (same body, just use below HTTP endpoint and method)
 
 ### Geo-search
 
-Note: loading geo-point from affay is in different order!
+Note: loading geo-point from array is in different order!
 
 - [geo-point](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-point.html)
-- [ge-search](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html)
+- [geo-search](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html)
 
 - by rectangle (Berlin coordinates)
 ```json
@@ -419,8 +420,72 @@ POST http://localhost:9200/beers/_search
     }
 }
 ```
+## 7. Synonyms
 
-## 7. Useful commands
+Sample for query time only (returns also Zywiec if Krakow is entered for brewery name):
+- create synonym file:
+```bash
+docker cp deploy/synonyms.txt es01:/usr/share/elasticsearch/config/synonyms.txt
+```
+- create index with custom analyzer for `name_breweries` field
+```json
+PUT http://localhost:9200/beers2
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "synonym_analyzer": {
+            "tokenizer": "whitespace",
+            "filter": ["my_synonyms"]
+          }
+        },
+        "filter": {
+          "my_synonyms": {
+            "type": "synonym",
+            "synonyms_path": "synonyms.txt",
+            "updateable": true
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+	  "dynamic": false,
+	  "properties" : {
+	    "name" : {
+	      "type" : "text"
+	    },
+	    "name_breweries": {
+	      "type": "text",
+	      "analyzer": "standard",
+	      "search_analyzer": "synonym_analyzer"
+      }
+	  }
+	}
+}
+```
+- add data
+```json
+PUT http://localhost:9200/beers2/_doc/1
+{
+  "name": "Porter",
+  "name_breweries": "Browar Zywiec" 
+}
+```
+- search for Krakow (brewery with such name does not exists):
+```json
+POST http://localhost:9200/beers2/_search
+{
+  "query": {
+    "match": {
+      "name_breweries": "krakow"
+    }
+  }
+}
+```
+
+## 8. Useful commands
 
 - get indices
 ```
@@ -434,4 +499,9 @@ GET http://localhost:9200/beers
 - get mapping
 ```
 http://localhost:9200/beers/_mapping
+```
+
+- delete index
+```
+DELETE http://localhost:9200/beers
 ```
