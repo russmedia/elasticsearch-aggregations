@@ -249,7 +249,7 @@ POST http://localhost:9200/beers/_search
 POST http://localhost:9200/beers/_search
 {
   "query": {
-    "match": {
+    "match_phrase": {
       "name_breweries":{
       	"query": "Zywiec Browar",
       	"operator": "AND"
@@ -373,7 +373,7 @@ POST http://localhost:9200/beers/_search
 }
 ```
 
-- by distance from point
+- by distance from point (Munich)
 ```json
 POST http://localhost:9200/beers/_search
 {
@@ -396,7 +396,7 @@ POST http://localhost:9200/beers/_search
 }
 ```
 
-- by drawing a polygon
+- by drawing a polygon (Bregenz - Schwarzach - Dornibirn)
 ```json
 POST http://localhost:9200/beers/_search
 {
